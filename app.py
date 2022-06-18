@@ -8,9 +8,10 @@ from backtesting import Backtest, Strategy
 from backtesting.lib import crossover
 from backtesting.test import SMA
 
-strategy = st.sidebar.radio(
-     "Crossover Strategies",
-     ('Single Moving Average', 'Dual Moving Average', 'Triple Moving Average'))
+st.set_page_config(page_title="AlgoTrade", page_icon="📈",
+                   layout="wide", initial_sidebar_state="auto", menu_items=None)
+
+st.title('Dual Moving Average Crossover Strategy')
 
 tkr = st.sidebar.text_input("Please enter a ticker symbol","AAPL").upper()
 
@@ -19,16 +20,17 @@ sd = st.sidebar.date_input(
      datetime.date(2018, 7, 6))
 ed = st.sidebar.date_input(
      "Enter an end date",
-     datetime.date(2019, 7, 6))
+     datetime.date(2021, 7, 6))
 
-sma_days = st.number_input("Please enter a window for shorter average(days)",30)
-lma_days = st.number_input("Please enter a window for longer average",100)
+sma_days = st.sidebar.number_input("Please enter a window for shorter average(days)",30)
+lma_days = st.sidebar.number_input("Please enter a window for longer average",100)
 
 ticker = yf.Ticker(tkr)
 
 hist = ticker.history(start=sd, end=ed)
 hist.reset_index(inplace=True)
 #hist = hist.rename(columns={'Close': 'Close'})
+st.markdown('Data')
 st.write(hist)
 
 start_date = pd.to_datetime(sd)
@@ -48,6 +50,7 @@ plt.title('Adj. Close Price History')
 plt.xlabel(date_str)
 plt.ylabel('Adj. Close Price USD ($)')
 plt.legend(loc='upper left')
+st.markdown('Adjusted Close Price history')
 st.pyplot(fig)
 
 sma = pd.DataFrame()
@@ -72,6 +75,7 @@ data = pd.DataFrame()
 data['tkr'] = hist['Close']
 data['sma'] = sma['Close']
 data['lma'] = lma['Close']
+st.markdown('Moving Averages for ' + tkr + ' Data')
 st.write(data)
 
 def buyNsell(data):
@@ -106,18 +110,19 @@ buyNsell = buyNsell(data)
 data['Buy Signal Price'] = buyNsell[0]
 data['Sell Signal Price'] = buyNsell[1]
 
-if( strategy == 'Dual Moving Average'):
-    fig3 = plt.figure(figsize=(12, 4.6))
-    plt.plot(data['tkr'], label = tkr, alpha = 0.35)
-    plt.plot(data['sma'], label = 'ShortAvg', alpha = 0.35)
-    plt.plot(data['lma'], label = 'LongAvg', alpha = 0.35)
-    plt.scatter(data.index, data['Buy Signal Price'], label = 'Buy', marker = '^', color = 'green')
-    plt.scatter(data.index, data['Sell Signal Price'], label = 'Sell', marker = 'v', color = 'red')
-    plt.title('Adj. Close Price History Buy and Sell Signals')
-    plt.xlabel(date_str)
-    plt.ylabel('Adj. Close Price USD ($)')
-    plt.legend(loc = 'upper left')
-    st.pyplot(fig3)
+
+fig3 = plt.figure(figsize=(12, 4.6))
+plt.plot(data['tkr'], label = tkr, alpha = 0.35)
+plt.plot(data['sma'], label = 'ShortAvg', alpha = 0.35)
+plt.plot(data['lma'], label = 'LongAvg', alpha = 0.35)
+plt.scatter(data.index, data['Buy Signal Price'], label = 'Buy', marker = '^', color = 'green')
+plt.scatter(data.index, data['Sell Signal Price'], label = 'Sell', marker = 'v', color = 'red')
+plt.title('Adj. Close Price History Buy and Sell Signals')
+plt.xlabel(date_str)
+plt.ylabel('Adj. Close Price USD ($)')
+plt.legend(loc = 'upper left')
+st.markdown('Buy and Sell Signals')
+st.pyplot(fig3)
 
 
 
@@ -138,4 +143,5 @@ bt = Backtest(hist, DualMACrossover,
               exclusive_orders=True)
 
 btdf = bt.run().head(27)
+st.write('Viability of the Trading Strategy: ')
 st.table(btdf)
